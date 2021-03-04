@@ -1,4 +1,5 @@
 import subprocess
+import random
 
 class ChessGame:
     def __init__(self,fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"):
@@ -315,6 +316,22 @@ class ChessGame:
                     if move[-1]=="\n":
                         move=move[:-1]
                     break
+                elif x=="":
+                    legals=[]
+                    p=lambda x,y:list("abcdefgh")[x]+str(8-y)
+                    for i1 in range(8):
+                        for j1 in range(8):
+                            for i2 in range(8):
+                                for j2 in range(8):
+                                    for prom in [2,3,4,5]:
+                                        if ([i1,j1]!=[i2,j2]) and (type(self.pos[0][i1][j1])==tuple) and self.isLegal([i1,j1],[i2,j2],prom):
+                                            legals.append(p(j1,i1)+p(j2,i2)+"nbrq"[prom-2])
+                    if len(legals) == 0:
+                        return None
+                    move=random.choice(legals)
+                    self.play(move)
+                    engine.kill()
+                    return move
             self.play(move)
             engine.kill()
             return move
