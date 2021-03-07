@@ -70,6 +70,38 @@ p=lambda x,y:list("abcdefgh")[x]+str(8-y)
 q_=lambda m:({k:v for k,v in zip("abcdefgh",range(8))}[m[0]],8-int(m[1]))
 q=lambda m:q_(m[:2])+q_(m[2:4])
 
+arrows = {}
+ax1=0
+ay1=0
+debind=False
+
+def on_mb3(e):
+    global promote,doAnim,arrows,ax1,ay1,s,debind
+    debind=True
+    x=e.x//int(100*s)
+    y=e.y//int(100*s)
+    if (x<0) or (7<x) or (y<0) or (7<y) or promote or doAnim:
+        return
+    ax1=x
+    ay1=y
+
+def on_release_mb3(e):
+    global promote,doAnim,arrows,ax1,ay1,s,debind
+    debind=False
+    x=e.x//int(100*s)
+    y=e.y//int(100*s)
+    if (x<0) or (7<x) or (y<0) or (7<y) or promote or doAnim:
+        return
+    lec=((ay1,ax1),(y,x))
+    if lec in arrows.keys():
+        canv.delete(arrows[lec])
+        arrows.pop(lec)
+    else:
+        if lec[0]==lec[1]:
+            arrows[lec] = canv.create_oval(ax1*int(100*s)+int(10*s),ay1*int(100*s)+int(10*s),(ax1+1)*int(100*s)-int(10*s),(ay1+1)*int(100*s)-int(10*s),width=10,outline="#00ff00")
+        else:
+            arrows[lec] = canv.create_line(ax1*int(100*s)+int(50*s),ay1*int(100*s)+int(50*s),x*int(100*s)+int(50*s),y*int(100*s)+int(50*s),arrow=tk.LAST,width=10,fill="#00ff00")
+
 def deqsx():
     global promote,pp
     pp=5
@@ -131,16 +163,18 @@ def PROD(x,y):
             msg="White Won!"
         mb.showinfo(title="Game Over", message=msg)
         canv.unbind("<Button-1>")
+        canv.bind("<Button-1>",ArrowClear)
         turn=False
         return
     th.Thread(target=enginePlay).start()
 
 def on_click(e):
-    global c1,c1C,checksq,promote,pis,pp,turn,opos,doAnim
+    global c1,c1C,checksq,promote,pis,pp,turn,opos,doAnim,debind,arrows
     x=e.x//int(100*s)
     y=e.y//int(100*s)
-    if (x<0) or (7<x) or (y<0) or (7<y) or (not turn) or promote or doAnim:
+    if (x<0) or (7<x) or (y<0) or (7<y) or (not turn) or promote or doAnim or debind:
         return
+    ArrowClear()
     if c1:
         clearLegals()
         canv.delete(selsq)
@@ -169,6 +203,7 @@ def on_click(e):
                 msg="White Won!"
             mb.showinfo(title="Game Over", message=msg)
             canv.unbind("<Button-1>")
+            canv.bind("<Button-1>",ArrowClear)
             turn=False
             return
         th.Thread(target=enginePlay).start()
@@ -177,6 +212,12 @@ def on_click(e):
         selSquare(x,y)
         c1=p(x,y)
         c1C=[x,y]
+
+def ArrowClear(*_):
+    global arrows
+    for i in arrows.values():
+        canv.delete(i)
+    arrows.clear()
 
 def enginePlay():
     global turn,checksq,depth,opos
@@ -201,6 +242,7 @@ def enginePlay():
             msg="White Won!"
         mb.showinfo(title="Game Over", message=msg)
         canv.unbind("<Button-1>")
+        canv.bind("<Button-1>",ArrowClear)
         turn=False
         return
     turn=True
@@ -325,6 +367,8 @@ canv = tk.Canvas(root,width=int(800*s),height=int(800*s),bg=wsq)
 canv.pack()
 
 canv.bind("<Button-1>",lambda e:th.Thread(target=on_click,args=(e,),daemon=True).start())
+canv.bind("<Button-3>",on_mb3)
+canv.bind("<ButtonRelease-3>",on_release_mb3)
 
 for i in range(8):
     for j in range(8):
